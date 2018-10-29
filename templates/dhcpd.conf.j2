@@ -1,0 +1,14 @@
+option domain-name "{{ DOMAIN }}";
+option domain-name-servers {{ DOMAIN-DNS-SERVERS }};
+default-lease-time {{ DEFAULT-LEASE-TIME }};
+max-lease-time {{ MAX-LEASE-TIME }};
+authoritative;
+log-facility local7;
+
+
+subnet {{ SUBNET }} netmask {{ NETMASK }} {
+  range dynamic-bootp {{ DHCP-IP-RANGE }};
+  option routers {{ GATEWAY }};
+  option broadcast-address {{ BROADCAST-ADDRESS }};
+  filename "pxelinux.0";
+}
