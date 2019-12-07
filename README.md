@@ -40,7 +40,7 @@ None.
 
 Fetch this role from Ansible Galaxy:
 
-`ansible-galaxy install mariuszczyz.centos-dhcpd`
+`ansible-galaxy install mariuszczyz.centos_dhcpd`
 
 Include this role from Ansible Galaxy via requirement.yml
 
@@ -64,7 +64,7 @@ In playbook.yml:
 - hosts: servers
   user: YOUR USER
   become: True
-
+  
   roles:
     - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
 ```
