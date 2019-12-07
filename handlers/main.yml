@@ -5,3 +5,4 @@
   service:
     name: dhcpd
     state: restarted
+  listen: restart dhcpd

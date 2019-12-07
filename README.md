@@ -1,8 +1,18 @@
-# CentOS 7 DHCPd Installation and Configuration Role
+# CentOS & Fedora DHCP Server Installation and Configuration Ansible Role
 
-This role installs and configured a very basic, single subnet local DHCP server. 
+This role configures a basic DHCP server which can be used as a regular primary DHCP service on a local network or as a temporary DHCP service used specifically for the purpose of allowing PXE boot clients to get temporary IP addresses while performing an unattended (or attended) CentOS & Fedora OS installation.
 
-This can be used as a drop-in replacement for a hardware router DHCP when additional functionality is needed to allow for filename PXE BOOT booting on clients. 
+The current way it is configured in the `templates/dhcpd.conf.j2` allows for both functionalities listed above. With additional custom configuration changes it can be tweaked to fit any end user needs.
+
+To make it behave properly and not interfere with other DHCP services running on the network it can serve IP addresses to clients based on either:
+
+- full MAC address to limit per a single device
+- partial vendor specific MAC address prefix to limit to a group of devices (example: VirtualBox)
+- specific string contained in the hostname
+
+Setting the dynamic IP range in `DHCP_DYNAMIC_IP_RANGE` variable and client pools outside of the current DHCP range on your local network or on its own seperate VLAN will eliminate any potential conflicts even if limiting by hostname or vendor MAC address.
+
+Note: this functionality has only been tested in a lab environment, use at your own risk in production. Actually, don't ever use this in production.
 
 ## Requirements
 
@@ -10,25 +20,21 @@ None.
 
 ## Role Variables
 
-`DOMAIN:` this is where the domain goes, example: example.org
-
-`DOMAIN-DNS-SERVERS:` network DNS resolvers, example: 192.168.1.100, 192.168.1.101
-
-`DEFAULT-LEASE-TIME:` how long before the DHCP client lease expires in seconds, example: 600;
-
-`MAX-LEASE-TIME:` maximum time before the DHCP client lease expires in seconds, example: 7200;
-
-`SUBNET:` local network subnet, example: 192.168.1.0
-
-`NETMASK:` local network netmask, example: 255.255.255.0
-
-`DHCP-IP-RANGE:` pool of IP addresses reserved for DHCP clients, example: 192.168.1.50 192.168.1.99
-
-`GATEWAY:` local network gateway, example: 192.168.1.1
-
-`BROADCAST-ADDRESS:` local network broadcast address, example: 192.168.1.255
+```yaml
+DOMAIN_NAME: local domain name for dhcp clients
+DOMAIN_DNS_SERVERS: internal or public DNS servers, blank space seperated
+DEFAULT_LEASE_TIME: DHCP lease time expiration in seconds
+MAX_LEASE_TIME: max DHCP lease time expiration in seconds
+SUBNET_IP_ADDRESS: subnet IP address of the local network
+NETMASK_IP_ADDRESS: netmask IP address of the local network
+DHCP_DYNAMIC_IP_RANGE: an range of IP address to serve to clients
+GATEWAY_IP_ADDRESS: local network gateway IP address
+BROADCAST_IP_ADDRESS: local network broadcast IP address
+```
 
 ## Dependencies
+
+None.
 
 ## Example Playbook
 
@@ -36,13 +42,36 @@ Fetch this role from Ansible Galaxy:
 
 `ansible-galaxy install mariuszczyz.centos-dhcpd`
 
+Include this role from Ansible Galaxy via requirement.yml
+
+### Galaxy option
+
+```yaml
+# Install from Ansible Galaxy
+- src: mariuszczyz.centos_dhcpd
+```
+
+### Github option
+
+```yaml
+# Install from Github repository
+- src: https://github.com/mariuszczyz/centos-dhcpd
+```
+
 In playbook.yml:
 
-```bash
+```yaml
 - hosts: servers
+  user: YOUR USER
+  become: True
+
   roles:
-    - { role: mariuszczyz.centos-dhcpd, tags: ['dhcpd'] }
+    - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
 ```
+
+Run it:
+
+`ansible-playbook -i hosts playbook.yml`
 
 ## License
 
@@ -50,6 +79,6 @@ BSD
 
 ## Author Information
 
-Author: Mariusz Czyz  
-
-Date: 10/2018
+Author: Mariusz Czyz
+Date: 12/2019
+mariuszczyz.com

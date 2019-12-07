@@ -1,14 +1,48 @@
-option domain-name "{{ DOMAIN }}";
-option domain-name-servers {{ DOMAIN-DNS-SERVERS }};
-default-lease-time {{ DEFAULT-LEASE-TIME }};
-max-lease-time {{ MAX-LEASE-TIME }};
+option domain-name "{{ DOMAIN_NAME }}";
+option domain-name-servers {{ DOMAIN_DNS_SERVERS }};
+default-lease-time {{ DEFAULT_LEASE_TIME }};
+max-lease-time {{ MAX_LEASE_TIME }};
 authoritative;
 log-facility local7;
+one-lease-per-client true;
+allow booting;
+allow bootp;
 
-
-subnet {{ SUBNET }} netmask {{ NETMASK }} {
-  range dynamic-bootp {{ DHCP-IP-RANGE }};
-  option routers {{ GATEWAY }};
-  option broadcast-address {{ BROADCAST-ADDRESS }};
+subnet {{ SUBNET_IP_ADDRESS }} netmask {{ NETMASK_IP_ADDRESS }} {
+  range {{ DHCP_DYNAMIC_IP_RANGE }};
+  option routers {{ GATEWAY_IP_ADDRESS }};
+  option broadcast-address {{ BROADCAST_IP_ADDRESS }};
+  default-lease-time {{ DEFAULT_LEASE_TIME }};
+  max-lease-time {{ MAX_LEASE_TIME }};
   filename "pxelinux.0";
+
+# serve clients by a MAC address
+# partial MAC address can be used to limit by vendors
+# in this example VirtualBox is used
+  class "pxe-boot-1" {
+    match if substring (hardware,1,3) = "08:00:27";
+  }
+  class "pxe-boot-2" {
+    match if substring (hardware,1,3) = "00:25:90";
+  }
+# serve clients by partial hostname
+  class "pxe" {
+    match if substring(option host-name,0,2) = “pxe”;
+  }
+# pool of IPs for all classes defined above
+  pool {
+    range dynamic-bootp 192.168.1.40 192.168.1.41;
+    allow members of "pxe-boot-1";
+    filename "pxelinux.0";
+  }
+  pool {
+    range dynamic-bootp 192.168.1.42 192.168.1.43;
+    allow members of "pxe-boot-2";
+    filename "pxelinux.0";
+  }
+  pool {
+    range dynamic-bootp 192.168.1.44 192.168.1.45;
+    allow members of "pxe";
+    filename "pxelinux.0";
+  }
 }

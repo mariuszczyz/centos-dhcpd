@@ -1,12 +1,12 @@
 ---
 # tasks file for mariuszczyz.centos-dhcpd
 
-- name: Install DHCP service
-  yum:
+- name: Install DHCP server package
+  package:
     name: dhcp
     state: present
 
-- name: Copy custom DHCP configuration files
+- name: Copy custom DHCP configuration template
   template:
     src: dhcpd.conf.j2
     dest: /etc/dhcp/dhcpd.conf
@@ -16,8 +16,7 @@
     group: root
   notify: restart dhcpd
 
-- name: Start and enable DHCP server
+- name: Enable DHCP server
   service:
     name: dhcpd
-    state: started
     enabled: yes
