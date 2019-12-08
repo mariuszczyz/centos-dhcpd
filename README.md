@@ -46,7 +46,7 @@ Fetch this role from Ansible Galaxy:
 
 `ansible-galaxy install mariuszczyz.centos_dhcpd`
 
-Include this role from Ansible Galaxy via requirement.yml
+Include this role from Ansible Galaxy via `requirements.yml`
 
 ### Galaxy install option
 
@@ -61,6 +61,10 @@ Include this role from Ansible Galaxy via requirement.yml
 # Install from Github repository
 - src: https://github.com/mariuszczyz/centos-dhcpd
 ```
+
+Install roles listed in `requirements.yml`:
+
+`ansible-galaxy install -r requirements.yml`
 
 In playbook.yml:
 
