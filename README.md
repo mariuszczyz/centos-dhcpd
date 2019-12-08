@@ -20,17 +20,21 @@ None.
 
 ## Role Variables
 
-```yaml
-DOMAIN_NAME: local domain name for dhcp clients
-DOMAIN_DNS_SERVERS: internal or public DNS servers, blank space seperated
-DEFAULT_LEASE_TIME: DHCP lease time expiration in seconds
-MAX_LEASE_TIME: max DHCP lease time expiration in seconds
-SUBNET_IP_ADDRESS: subnet IP address of the local network
-NETMASK_IP_ADDRESS: netmask IP address of the local network
-DHCP_DYNAMIC_IP_RANGE: an range of IP address to serve to clients
-GATEWAY_IP_ADDRESS: local network gateway IP address
-BROADCAST_IP_ADDRESS: local network broadcast IP address
-```
+Add and customize the following role variables in one of the following locations:
+
+- roles/mariuszczyz.centos-dhcpd/defaults/main.yml
+- host_vars/hostname.yml
+- group_vars/groupname.yml
+
+`DOMAIN_NAME`: local domain name for dhcp clients, example: `local.localdomain`
+`DOMAIN_DNS_SERVERS`: internal or public DNS servers, blank space seperated, example: `1.1.1.1 9.9.9.9`
+`DEFAULT_LEASE_TIME`: DHCP lease time expiration in seconds, example: `600`
+`MAX_LEASE_TIME`: max DHCP lease time expiration in seconds, example: `7200`
+`SUBNET_IP_ADDRESS`: subnet IP address of the local network, example: `192.168.0.0`
+`NETMASK_IP_ADDRESS`: netmask IP address of the local network, example: `255.255.255.0`
+`DHCP_DYNAMIC_IP_RANGE`: an range of IP address to serve to clients, example: `192.168.0.100 192.168.0.150`
+`GATEWAY_IP_ADDRESS`: local network gateway IP address, example: `192.168.0.1`
+`BROADCAST_IP_ADDRESS`: local network broadcast IP address, example: `192.168.1.255`
 
 ## Dependencies
 
@@ -44,14 +48,14 @@ Fetch this role from Ansible Galaxy:
 
 Include this role from Ansible Galaxy via requirement.yml
 
-### Galaxy option
+### Galaxy install option
 
 ```yaml
 # Install from Ansible Galaxy
 - src: mariuszczyz.centos_dhcpd
 ```
 
-### Github option
+### Github install option
 
 ```yaml
 # Install from Github repository
@@ -64,9 +68,23 @@ In playbook.yml:
 - hosts: servers
   user: YOUR USER
   become: True
-  
+
   roles:
     - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
+```
+
+Role variables in host_vars/hostname.yml
+
+```yaml
+DOMAIN_NAME:
+DOMAIN_DNS_SERVERS:
+DEFAULT_LEASE_TIME:
+MAX_LEASE_TIME:
+SUBNET_IP_ADDRESS:
+NETMASK_IP_ADDRESS:
+DHCP_DYNAMIC_IP_RANGE:
+GATEWAY_IP_ADDRESS:
+BROADCAST_IP_ADDRESS:
 ```
 
 Run it:

@@ -18,11 +18,11 @@ subnet {{ SUBNET_IP_ADDRESS }} netmask {{ NETMASK_IP_ADDRESS }} {
 
 # serve clients by a MAC address
 # partial MAC address can be used to limit by vendors
-# in this example VirtualBox is used
-  class "pxe-boot-1" {
+# in this example VirtualBox and SuperMicro are used
+  class "VBox" {
     match if substring (hardware,1,3) = "08:00:27";
   }
-  class "pxe-boot-2" {
+  class "SuperMicro" {
     match if substring (hardware,1,3) = "00:25:90";
   }
 # serve clients by partial hostname
@@ -32,12 +32,12 @@ subnet {{ SUBNET_IP_ADDRESS }} netmask {{ NETMASK_IP_ADDRESS }} {
 # pool of IPs for all classes defined above
   pool {
     range dynamic-bootp 192.168.1.40 192.168.1.41;
-    allow members of "pxe-boot-1";
+    allow members of "VBox";
     filename "pxelinux.0";
   }
   pool {
     range dynamic-bootp 192.168.1.42 192.168.1.43;
-    allow members of "pxe-boot-2";
+    allow members of "SuperMicro";
     filename "pxelinux.0";
   }
   pool {
