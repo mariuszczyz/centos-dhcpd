@@ -77,7 +77,7 @@ In playbook.yml:
     - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
 ```
 
-Role variables in host_vars/hostname.yml
+Role variables in `host_vars/hostname.yml`
 
 ```yaml
 DOMAIN_NAME:
