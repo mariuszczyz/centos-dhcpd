@@ -26,15 +26,15 @@ Add and customize the following role variables in one of the following locations
 - host_vars/hostname.yml
 - group_vars/groupname.yml
 
-`DOMAIN_NAME`: local domain name for dhcp clients, example: `local.localdomain`  
-`DOMAIN_DNS_SERVERS`: internal or public DNS servers, blank space seperated, example: `1.1.1.1 9.9.9.9`  
-`DEFAULT_LEASE_TIME`: DHCP lease time expiration in seconds, example: `600`  
-`MAX_LEASE_TIME`: max DHCP lease time expiration in seconds, example: `7200`  
-`SUBNET_IP_ADDRESS`: subnet IP address of the local network, example: `192.168.0.0`  
-`NETMASK_IP_ADDRESS`: netmask IP address of the local network, example: `255.255.255.0`  
-`DHCP_DYNAMIC_IP_RANGE`: an range of IP address to serve to clients, example: `192.168.0.100 192.168.0.150`  
-`GATEWAY_IP_ADDRESS`: local network gateway IP address, example: `192.168.0.1`  
-`BROADCAST_IP_ADDRESS`: local network broadcast IP address, example: `192.168.1.255`  
+`DOMAIN_NAME`: local domain name for dhcp clients, example: `local.localdomain`
+`DOMAIN_DNS_SERVERS`: internal or public DNS servers, blank space seperated, example: `1.1.1.1 9.9.9.9`
+`DEFAULT_LEASE_TIME`: DHCP lease time expiration in seconds, example: `600`
+`MAX_LEASE_TIME`: max DHCP lease time expiration in seconds, example: `7200`
+`SUBNET_IP_ADDRESS`: subnet IP address of the local network, example: `192.168.0.0`
+`NETMASK_IP_ADDRESS`: netmask IP address of the local network, example: `255.255.255.0`
+`DHCP_DYNAMIC_IP_RANGE`: an range of IP address to serve to clients, example: `192.168.0.100 192.168.0.150`
+`GATEWAY_IP_ADDRESS`: local network gateway IP address, example: `192.168.0.1`
+`BROADCAST_IP_ADDRESS`: local network broadcast IP address, example: `192.168.1.255`
 
 ## Dependencies
 
@@ -77,7 +77,7 @@ In playbook.yml:
     - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
 ```
 
-Role variables in `host_vars/hostname.yml`
+Role variables in host_vars/hostname.yml
 
 ```yaml
 DOMAIN_NAME:
@@ -101,6 +101,6 @@ BSD
 
 ## Author Information
 
-Author: Mariusz Czyz  
-Date: 12/2019  
-mariuszczyz.com  
+Author: Mariusz Czyz
+Date: 12/2019
+mariuszczyz.com
