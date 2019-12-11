@@ -44,7 +44,7 @@ Useful monitoring:
 `journalctl -f` - watch the system log in real time, this is where client/server
 DHCP renewal messages will be logged.
 
-`watch -n1 "cat /var/lib/dhcp/dhcpd.leases | grep BLAH` - watch current list of
+`watch -n1 "cat /var/lib/dhcpd/dhcpd.leases | grep lease` - watch current list of
 active DHCP leases served by this server
 
 ## Requirements
