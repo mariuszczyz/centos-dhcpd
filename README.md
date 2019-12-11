@@ -1,18 +1,51 @@
 # CentOS & Fedora DHCP Server Installation and Configuration Ansible Role
 
-This role configures a basic DHCP server which can be used as a regular primary DHCP service on a local network or as a temporary DHCP service used specifically for the purpose of allowing PXE boot clients to get temporary IP addresses while performing an unattended (or attended) CentOS & Fedora OS installation.
+This role configures a basic DHCP server which can be used as:
 
-The current way it is configured in the `templates/dhcpd.conf.j2` allows for both functionalities listed above. With additional custom configuration changes it can be tweaked to fit any end user needs.
+- regular primary DHCP server on a local network
+- or a temporary DHCP service used specifically for the purpose of allowing
+PXE boot clients to get temporary IP addresses while performing
+an unattended (or attended) CentOS & Fedora OS installation. Or other tasks
+that require PXE boot capabilities.
 
-To make it behave properly and not interfere with other DHCP services running on the network it can serve IP addresses to clients based on either:
+The current way it is configured in the `templates/dhcpd.conf.j2`
+allows for both functionalities listed above.
+With additional custom configuration changes it can be tweaked to
+fit any end user needs.
+
+To make it behave properly and not interfere with other DHCP services
+running on the network it can serve IP addresses to clients
+based on either:
 
 - full MAC address to limit per a single device
-- partial vendor specific MAC address prefix to limit to a group of devices (example: VirtualBox)
+- partial vendor specific MAC address prefix to limit to a group
+  of devices (example: VirtualBox)
 - specific string contained in the hostname
 
-Setting the dynamic IP range in `DHCP_DYNAMIC_IP_RANGE` variable and client pools outside of the current DHCP range on your local network or on its own seperate VLAN will eliminate any potential conflicts even if limiting by hostname or vendor MAC address.
+Setting the dynamic IP range in `DHCP_DYNAMIC_IP_RANGE` variable and
+client pools outside of the current DHCP range on your local network
+or on its own seperate VLAN will eliminate any potential conflicts
+even if limiting by hostname or vendor MAC address.
 
-Note: this functionality has only been tested in a lab environment, use at your own risk in production. Actually, don't ever use this in production.
+Note: this functionality has only been tested in a lab environment,
+use at your own risk in production. Actually, don't ever use this in production.
+
+I have successfully used this in a lab environments with no conflicts with the
+primary DHCP service as long as the configuration is done properly and limits on
+MAC addresses are set carefully. Limiting the DHCP range and monitoring logs for
+ongoing DHCP leases helps in detecting issues quickly as well.
+
+The worst case scenario is one of the existing clients will renew its IP address
+with this DHCP server. If all other network settings are the same, no issues should
+arrise.
+
+Useful monitoring:
+
+`journalctl -f` - watch the system log in real time, this is where client/server
+DHCP renewal messages will be logged.
+
+`watch -n1 "cat /var/lib/dhcp/dhcpd.leases | grep BLAH` - watch current list of
+active DHCP leases served by this server
 
 ## Requirements
 
@@ -20,21 +53,35 @@ None.
 
 ## Role Variables
 
-Add and customize the following role variables in one of the following locations:
+Add and customize the following role variables in one of the following
+locations:
 
-- roles/mariuszczyz.centos-dhcpd/defaults/main.yml
-- host_vars/hostname.yml
-- group_vars/groupname.yml
+Recommended:
 
-`DOMAIN_NAME`: local domain name for dhcp clients, example: `local.localdomain`
-`DOMAIN_DNS_SERVERS`: internal or public DNS servers, blank space seperated, example: `1.1.1.1 9.9.9.9`
-`DEFAULT_LEASE_TIME`: DHCP lease time expiration in seconds, example: `600`
-`MAX_LEASE_TIME`: max DHCP lease time expiration in seconds, example: `7200`
-`SUBNET_IP_ADDRESS`: subnet IP address of the local network, example: `192.168.0.0`
-`NETMASK_IP_ADDRESS`: netmask IP address of the local network, example: `255.255.255.0`
-`DHCP_DYNAMIC_IP_RANGE`: an range of IP address to serve to clients, example: `192.168.0.100 192.168.0.150`
-`GATEWAY_IP_ADDRESS`: local network gateway IP address, example: `192.168.0.1`
-`BROADCAST_IP_ADDRESS`: local network broadcast IP address, example: `192.168.1.255`
+- host_vars/{{ HOSTNAME }}.yml
+- group_vars/{{ GROUPNAME }}.yml
+
+Repplace `{{ HOSTNAME }}` and `{{ GROUPNAME }}` with appropriate
+inventory names.
+
+It's recommended to add all required variables to `hosts_vars` and
+`group_vars`. This way they will not get overwritten next time the
+original role is updated.
+
+| Variable | Comment | Example |
+| -------- | ------- | ------- |
+| DOMAIN_NAME | local domain name for dhcp clients | local.localdomain |
+| DOMAIN_DNS_SERVERS | internal or public DNS servers, blank space seperated | 1.1.1.1 9.9.9.9 |
+| DEFAULT_LEASE_TIME | DHCP lease time expiration in seconds | 600 |
+| MAX_LEASE_TIME |     max DHCP lease time expiration in seconds | 7200 |
+| SUBNET_IP_ADDRESS | subnet IP address of the local network | 192.168.0.0 |
+| NETMASK_IP_ADDRESS | netmask IP address of the local network | 255.255.255.0 |
+| DHCP_DYNAMIC_IP_RANGE | an range of IP address to serve to clients | 192.168.0.100 192.168.0.150 |
+| GATEWAY_IP_ADDRESS | local network gateway IP address | 192.168.0.1 |
+| BROADCAST_IP_ADDRESS | local network broadcast IP address | 192.168.1.255 |
+| OPTIONAL: | The variables below are for PXE functionality only | |
+| NEXT_SERVER_IP | IP address of a server to get the boot files from | 192.168.0.200 |
+|  |
 
 ## Dependencies
 
@@ -42,31 +89,40 @@ None.
 
 ## Example Playbook
 
-Fetch this role from Ansible Galaxy:
+### Manual
+
+Fetch this role from Ansible Galaxy manually:
 
 `ansible-galaxy install mariuszczyz.centos_dhcpd`
 
-Include this role from Ansible Galaxy via `requirements.yml`
+### Not Manual
 
-### Galaxy install option
+#### Galaxy
+
+Or include this role from Ansible Galaxy via `requirements.yml`
 
 ```yaml
+# requirements.yml
 # Install from Ansible Galaxy
 - src: mariuszczyz.centos_dhcpd
 ```
 
-### Github install option
+#### Github option
 
 ```yaml
+# requirements.yml
 # Install from Github repository
-- src: https://github.com/mariuszczyz/centos-dhcpd
+- src: https://www.github.com/mariuszczyz/centos_dhcpd
 ```
 
-Install roles listed in `requirements.yml`:
+Then run this to install all dependencies from Ansible Galaxy:
 
 `ansible-galaxy install -r requirements.yml`
 
-In playbook.yml:
+### Run it
+
+If you want to run this role individually create a new file:
+`playbook.yml` (name it however you wish btw) with the following content:
 
 ```yaml
 - hosts: servers
@@ -75,20 +131,6 @@ In playbook.yml:
 
   roles:
     - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
-```
-
-Role variables in host_vars/hostname.yml
-
-```yaml
-DOMAIN_NAME:
-DOMAIN_DNS_SERVERS:
-DEFAULT_LEASE_TIME:
-MAX_LEASE_TIME:
-SUBNET_IP_ADDRESS:
-NETMASK_IP_ADDRESS:
-DHCP_DYNAMIC_IP_RANGE:
-GATEWAY_IP_ADDRESS:
-BROADCAST_IP_ADDRESS:
 ```
 
 Run it:
