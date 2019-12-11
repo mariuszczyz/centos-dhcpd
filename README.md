@@ -61,6 +61,10 @@ Recommended:
 - host_vars/{{ HOSTNAME }}.yml
 - group_vars/{{ GROUPNAME }}.yml
 
+Optional:
+
+- {{ roles_path }}/mariuszczyz.centos-dhcpd/defaults/main.yml
+
 Repplace `{{ HOSTNAME }}` and `{{ GROUPNAME }}` with appropriate
 inventory names.
 
@@ -79,8 +83,6 @@ original role is updated.
 | DHCP_DYNAMIC_IP_RANGE | an range of IP address to serve to clients | 192.168.0.100 192.168.0.150 |
 | GATEWAY_IP_ADDRESS | local network gateway IP address | 192.168.0.1 |
 | BROADCAST_IP_ADDRESS | local network broadcast IP address | 192.168.1.255 |
-| OPTIONAL: | The variables below are for PXE functionality only | |
-| NEXT_SERVER_IP | IP address of a server to get the boot files from | 192.168.0.200 |
 |  |
 
 ## Dependencies
@@ -143,6 +145,6 @@ BSD
 
 ## Author Information
 
-Author: Mariusz Czyz
-Date: 12/2019
+Author: Mariusz Czyz  
+Date: 12/2019  
 mariuszczyz.com

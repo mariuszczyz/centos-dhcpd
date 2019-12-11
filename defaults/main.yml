@@ -1,2 +1,29 @@
 ---
 # defaults file for mariuszczyz.centos-dhcpd
+
+# local domain name for dhcp clients
+DOMAIN_NAME:
+
+# internal or public DNS servers, blank space seperated
+DOMAIN_DNS_SERVERS:
+
+# DHCP lease time expiration in seconds
+DEFAULT_LEASE_TIME:
+
+# max DHCP lease time expiration in seconds
+MAX_LEASE_TIME:
+
+# subnet IP address of the local network
+SUBNET_IP_ADDRESS:
+
+# netmask IP address of the local network
+NETMASK_IP_ADDRESS:
+
+# range of IP address to serve to clients
+DHCP_DYNAMIC_IP_RANGE:
+
+# local network gateway IP address
+GATEWAY_IP_ADDRESS:
+
+# local network broadcast IP address
+BROADCAST_IP_ADDRESS:

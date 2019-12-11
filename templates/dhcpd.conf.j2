@@ -16,7 +16,7 @@ subnet {{ SUBNET_IP_ADDRESS }} netmask {{ NETMASK_IP_ADDRESS }} {
   max-lease-time {{ MAX_LEASE_TIME }};
   filename "pxelinux.0";
   next-server 192.168.1.109;
-  
+
 # serve clients by a MAC address
 # partial MAC address can be used to limit by vendors
 # in this example VirtualBox is used
@@ -35,18 +35,18 @@ subnet {{ SUBNET_IP_ADDRESS }} netmask {{ NETMASK_IP_ADDRESS }} {
     range dynamic-bootp 192.168.1.40 192.168.1.41;
     allow members of "VBox";
     filename "pxelinux.0";
-    next-server {{ NEXT_SERVER_IP }};
+    next-server {{ ansible_default_ipv4.address }};
   }
   pool {
     range dynamic-bootp 192.168.1.42 192.168.1.43;
     allow members of "SuperMicro";
     filename "pxelinux.0";
-    next-server {{ NEXT_SERVER_IP }};
+    next-server {{ ansible_default_ipv4.address }};
   }
   pool {
     range dynamic-bootp 192.168.1.44 192.168.1.45;
     allow members of "pxe";
     filename "pxelinux.0";
-    next-server {{ NEXT_SERVER_IP }};
+    next-server {{ ansible_default_ipv4.address }};
   }
 }
