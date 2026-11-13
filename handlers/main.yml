@@ -1,8 +1,14 @@
 ---
-# handlers file for mariuszczyz.centos-dhcpd
+# SPDX-License-Identifier: MIT
 
-- name: restart dhcpd
-  service:
+- name: Restart dhcpd
+  ansible.builtin.service:
     name: dhcpd
     state: restarted
-  listen: restart dhcpd
+  when: centos_dhcpd_backend == 'isc'
+
+- name: Restart kea-dhcp4
+  ansible.builtin.service:
+    name: kea-dhcp4
+    state: restarted
+  when: centos_dhcpd_backend == 'kea'

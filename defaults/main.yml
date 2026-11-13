@@ -1,29 +1,30 @@
 ---
-# defaults file for mariuszczyz.centos-dhcpd
+# SPDX-License-Identifier: MIT
+# defaults file for mariuszczyz.centos_dhcpd
+#
+# The core variables have no defaults. meta/argument_specs.yml marks
+# them as required, so the role fails early when a caller omits one.
+# See meta/argument_specs.yml for names, types, and descriptions.
 
-# local domain name for dhcp clients
-DOMAIN_NAME:
-
-# internal or public DNS servers, blank space seperated
-DOMAIN_DNS_SERVERS:
-
-# DHCP lease time expiration in seconds
-DEFAULT_LEASE_TIME:
-
-# max DHCP lease time expiration in seconds
-MAX_LEASE_TIME:
-
-# subnet IP address of the local network
-SUBNET_IP_ADDRESS:
-
-# netmask IP address of the local network
-NETMASK_IP_ADDRESS:
-
-# range of IP address to serve to clients
-DHCP_DYNAMIC_IP_RANGE:
-
-# local network gateway IP address
-GATEWAY_IP_ADDRESS:
-
-# local network broadcast IP address
-BROADCAST_IP_ADDRESS:
+centos_dhcpd_pxelinux_filename: pxelinux.0
+centos_dhcpd_next_server: ""
+centos_dhcpd_authoritative: true
+centos_dhcpd_log_facility: local7
+centos_dhcpd_interfaces:
+  - "*"
+centos_dhcpd_pools:
+  - name: VBox
+    match_by: mac
+    match_value: "08:00:27"
+    range: ["192.168.1.40", "192.168.1.41"]
+    next_server: ""
+  - name: SuperMicro
+    match_by: mac
+    match_value: "00:25:90"
+    range: ["192.168.1.42", "192.168.1.43"]
+    next_server: ""
+  - name: pxe
+    match_by: hostname
+    match_value: "pxe"
+    range: ["192.168.1.44", "192.168.1.45"]
+    next_server: ""

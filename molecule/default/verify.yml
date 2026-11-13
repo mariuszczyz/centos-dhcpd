@@ -1,0 +1,49 @@
+---
+# SPDX-License-Identifier: MIT
+- name: Verify DHCP server
+  hosts: all
+  become: true
+  vars:
+    backend_map:
+      Rocky: { "9": isc, "10": kea }
+      AlmaLinux: { "9": isc, "10": kea }
+      CentOS: { "9": isc, "10": kea }
+      RedHat: { "9": isc, "10": kea }
+      Fedora: { "42": kea, "43": isc, "44": isc, "45": isc }
+    expected_backend: >-
+      {{ backend_map[ansible_facts['distribution']]
+         [ansible_facts['distribution_major_version']] }}
+  tasks:
+    - name: Check configuration file exists
+      ansible.builtin.stat:
+        path: "{{ '/etc/dhcp/dhcpd.conf' if expected_backend == 'isc' else '/etc/kea/kea-dhcp4.conf' }}"
+      register: dhcpd_config
+
+    - name: Assert configuration file exists
+      ansible.builtin.assert:
+        that: dhcpd_config.stat.exists
+
+    - name: Test ISC dhcpd configuration syntax
+      ansible.builtin.command: dhcpd -t -cf /etc/dhcp/dhcpd.conf
+      changed_when: false
+      when: expected_backend == 'isc'
+
+    - name: Test Kea DHCP configuration syntax
+      ansible.builtin.command: kea-dhcp4 -t /etc/kea/kea-dhcp4.conf
+      changed_when: false
+      when: expected_backend == 'kea'
+
+    - name: Validate Kea DHCP configuration JSON
+      ansible.builtin.command: python3 -m json.tool /etc/kea/kea-dhcp4.conf
+      changed_when: false
+      when: expected_backend == 'kea'
+
+    - name: Check DHCP server service is enabled
+      ansible.builtin.systemd:
+        name: "{{ 'dhcpd' if expected_backend == 'isc' else 'kea-dhcp4' }}"
+      register: dhcp_service
+      changed_when: false
+
+    - name: Assert DHCP server service is enabled
+      ansible.builtin.assert:
+        that: dhcp_service.status.UnitFileState == 'enabled'

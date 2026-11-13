@@ -1,0 +1,53 @@
+---
+# SPDX-License-Identifier: MIT
+dependency:
+  name: galaxy
+driver:
+  name: podman
+# Rocky 10 images require an x86-64-v3 CPU. Add instance-rocky10
+# with image quay.io/rockylinux/rockylinux:10 on a supported host.
+platforms:
+  - name: instance-rocky9
+    image: quay.io/rockylinux/rockylinux:9
+    privileged: true
+    cgroup_manager: cgroupfs
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    network: molecule-dhcp
+  - name: instance-alma9
+    image: docker.io/library/almalinux:9
+    privileged: true
+    cgroup_manager: cgroupfs
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    network: molecule-dhcp
+  - name: instance-cs9
+    image: quay.io/centos/centos:stream9
+    privileged: true
+    cgroup_manager: cgroupfs
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    network: molecule-dhcp
+  - name: instance-fedora42
+    image: quay.io/fedora/fedora:42
+    privileged: true
+    cgroup_manager: cgroupfs
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    network: molecule-dhcp
+  - name: instance-fedora44
+    image: quay.io/fedora/fedora:44
+    privileged: true
+    cgroup_manager: cgroupfs
+    command: /sbin/init
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    network: molecule-dhcp
+provisioner:
+  name: ansible
+verifier:
+  name: ansible

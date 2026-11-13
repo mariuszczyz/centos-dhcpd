@@ -1,0 +1,23 @@
+---
+# SPDX-License-Identifier: MIT
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    centos_dhcpd_domain_name: lab.example
+    centos_dhcpd_domain_dns_servers: ["1.1.1.1"]
+    centos_dhcpd_default_lease_time: 600
+    centos_dhcpd_max_lease_time: 7200
+    centos_dhcpd_subnet_ip_address: 192.168.122.0
+    centos_dhcpd_netmask_ip_address: 255.255.255.0
+    centos_dhcpd_dynamic_ip_range: ["192.168.122.100", "192.168.122.110"]
+    centos_dhcpd_gateway_ip_address: 192.168.122.1
+    centos_dhcpd_broadcast_ip_address: 192.168.122.255
+    centos_dhcpd_pools:
+      - name: VBox
+        match_by: mac
+        match_value: "08:00:27"
+        range: ["192.168.122.120", "192.168.122.121"]
+        next_server: ""
+  roles:
+    - role: centos-dhcpd

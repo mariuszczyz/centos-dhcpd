@@ -1,150 +1,207 @@
-# CentOS & Fedora DHCP Server Installation and Configuration Ansible Role
+# CentOS DHCP server Ansible role
 
-This role configures a basic DHCP server which can be used as:
+This role installs and configures a DHCP server for a lab network. It supports
+PXE boot clients with vendor and hostname based address pools. The role
+installs ISC dhcpd on EL9 and Fedora 43-45. It installs Kea DHCP on EL10 and
+Fedora 42, because the ISC `dhcp-server` package is not available there. The
+role manages the configuration file, checks the rendered configuration, and
+enables the service.
 
-- regular primary DHCP server on a local network
-- or a temporary DHCP service used specifically for the purpose of allowing
-PXE boot clients to get temporary IP addresses while performing
-an unattended (or attended) CentOS & Fedora OS installation. Or other tasks
-that require PXE boot capabilities.
+## Warning
 
-The current way it is configured in the `templates/dhcpd.conf.j2`
-allows for both functionalities listed above.
-With additional custom configuration changes it can be tweaked to
-fit any end user needs.
-
-To make it behave properly and not interfere with other DHCP services
-running on the network it can serve IP addresses to clients
-based on either:
-
-- full MAC address to limit per a single device
-- partial vendor specific MAC address prefix to limit to a group
-  of devices (example: VirtualBox)
-- specific string contained in the hostname
-
-Setting the dynamic IP range in `DHCP_DYNAMIC_IP_RANGE` variable and
-client pools outside of the current DHCP range on your local network
-or on its own seperate VLAN will eliminate any potential conflicts
-even if limiting by hostname or vendor MAC address.
-
-Note: this functionality has only been tested in a lab environment,
-use at your own risk in production. Actually, don't ever use this in production.
-
-I have successfully used this in a lab environments with no conflicts with the
-primary DHCP service as long as the configuration is done properly and limits on
-MAC addresses are set carefully. Limiting the DHCP range and monitoring logs for
-ongoing DHCP leases helps in detecting issues quickly as well.
-
-The worst case scenario is one of the existing clients will renew its IP address
-with this DHCP server. If all other network settings are the same, no issues should
-arrise.
-
-Useful monitoring:
-
-`journalctl -f` - watch the system log in real time, this is where client/server
-DHCP renewal messages will be logged.
-
-`watch -n1 "cat /var/lib/dhcpd/dhcpd.leases | grep lease` - watch current list of
-active DHCP leases served by this server
+Use this role in a lab. The role sets the server as authoritative by default
+(`centos_dhcpd_authoritative: true`). An authoritative server answers all DHCP
+traffic on the network. It can disrupt an existing production network. Keep
+`centos_dhcpd_dynamic_ip_range` and every pool range outside the ranges of the
+other DHCP servers on the network. Set `centos_dhcpd_authoritative: false` to
+limit the server to its declared subnets.
 
 ## Requirements
 
-None.
+Control node: ansible-core 2.15 or later.
 
-## Role Variables
+Supported targets:
 
-Add and customize the following role variables in one of the following
-locations:
+| Distribution | Version | DHCP server | Package | Service |
+| --- | --- | --- | --- | --- |
+| EL (Rocky, AlmaLinux, CentOS, RHEL) | 9 | ISC dhcpd | `dhcp-server` | `dhcpd` |
+| EL (Rocky, AlmaLinux, CentOS, RHEL) | 10 | Kea DHCP | `kea` | `kea-dhcp4` |
+| Fedora | 42 | Kea DHCP | `kea` | `kea-dhcp4` |
+| Fedora | 43, 44, 45 | ISC dhcpd | `dhcp-server` | `dhcpd` |
 
-Recommended:
+The ISC dhcpd package on Fedora is best-effort. The role fails with a clear
+message on any other platform.
 
-- host_vars/{{ HOSTNAME }}.yml
-- group_vars/{{ GROUPNAME }}.yml
+## Variables
 
-Optional:
+The role checks every variable against `meta/argument_specs.yml` and fails
+early when a required variable is missing.
 
-- {{ roles_path }}/mariuszczyz.centos-dhcpd/defaults/main.yml
+| Variable | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `centos_dhcpd_domain_name` | str | yes | | Local domain name that the role gives to DHCP clients. |
+| `centos_dhcpd_domain_dns_servers` | list of str | yes | | DNS server addresses that the role gives to DHCP clients. |
+| `centos_dhcpd_default_lease_time` | int | yes | | Lease time in seconds for a new lease. |
+| `centos_dhcpd_max_lease_time` | int | yes | | Maximum lease time in seconds. |
+| `centos_dhcpd_subnet_ip_address` | str | yes | | Network address of the served subnet. |
+| `centos_dhcpd_netmask_ip_address` | str | yes | | Netmask of the served subnet. |
+| `centos_dhcpd_dynamic_ip_range` | list of str | yes | | Start and end address of the dynamic IP range. |
+| `centos_dhcpd_gateway_ip_address` | str | yes | | Gateway address that the role gives to DHCP clients. |
+| `centos_dhcpd_broadcast_ip_address` | str | yes | | Broadcast address that the role gives to DHCP clients. |
+| `centos_dhcpd_pxelinux_filename` | str | no | `pxelinux.0` | Boot file name that PXE clients download. |
+| `centos_dhcpd_next_server` | str | no | `""` | TFTP server address for PXE clients. An empty value uses the primary IPv4 address of the server. |
+| `centos_dhcpd_authoritative` | bool | no | `true` | Answer all DHCP traffic on the network. |
+| `centos_dhcpd_log_facility` | str | no | `local7` | Syslog facility. ISC dhcpd only. |
+| `centos_dhcpd_interfaces` | list of str | no | `["*"]` | Network interfaces. Kea DHCP only. |
+| `centos_dhcpd_pools` | list of dict | no | see below | Static IP pools for PXE clients. |
 
-Repplace `{{ HOSTNAME }}` and `{{ GROUPNAME }}` with appropriate
-inventory names.
+Each pool entry uses these keys:
 
-It's recommended to add all required variables to `hosts_vars` and
-`group_vars`. This way they will not get overwritten next time the
-original role is updated.
+| Key | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `name` | str | yes | | Class name of this pool. |
+| `match_by` | str | yes | | `mac` or `hostname`. Selects the match rule. |
+| `match_value` | str | yes | | MAC address prefix such as `08:00:27`, or hostname prefix such as `pxe`. |
+| `match_value` | str | yes | | MAC address prefix such as `08:00:27`, or hostname prefix such as `pxe`. Use lowercase hexadecimal. |
+| `next_server` | str | no | `""` | TFTP server address for this pool. An empty value uses `centos_dhcpd_next_server`. |
 
-| Variable | Comment | Example |
-| -------- | ------- | ------- |
-| DOMAIN_NAME | local domain name for dhcp clients | local.localdomain |
-| DOMAIN_DNS_SERVERS | internal or public DNS servers, blank space seperated | 1.1.1.1 9.9.9.9 |
-| DEFAULT_LEASE_TIME | DHCP lease time expiration in seconds | 600 |
-| MAX_LEASE_TIME |     max DHCP lease time expiration in seconds | 7200 |
-| SUBNET_IP_ADDRESS | subnet IP address of the local network | 192.168.0.0 |
-| NETMASK_IP_ADDRESS | netmask IP address of the local network | 255.255.255.0 |
-| DHCP_DYNAMIC_IP_RANGE | an range of IP address to serve to clients | 192.168.0.100 192.168.0.150 |
-| GATEWAY_IP_ADDRESS | local network gateway IP address | 192.168.0.1 |
-| BROADCAST_IP_ADDRESS | local network broadcast IP address | 192.168.1.255 |
-|  |
+Default pools:
+
+```yaml
+centos_dhcpd_pools:
+  - name: VBox
+    match_by: mac
+    match_value: "08:00:27"
+    range: ["192.168.1.40", "192.168.1.41"]
+    next_server: ""
+  - name: SuperMicro
+    match_by: mac
+    match_value: "00:25:90"
+    range: ["192.168.1.42", "192.168.1.43"]
+    next_server: ""
+  - name: pxe
+    match_by: hostname
+    match_value: "pxe"
+    range: ["192.168.1.44", "192.168.1.45"]
+    next_server: ""
+```
+
+## Renamed variables in version 2
+
+This release renames every role variable. Update your inventory and playbooks.
+
+| Old variable | New variable |
+| --- | --- |
+| `DOMAIN_NAME` | `centos_dhcpd_domain_name` |
+| `DOMAIN_DNS_SERVERS` (space-separated string) | `centos_dhcpd_domain_dns_servers` (list) |
+| `DEFAULT_LEASE_TIME` | `centos_dhcpd_default_lease_time` |
+| `MAX_LEASE_TIME` | `centos_dhcpd_max_lease_time` |
+| `SUBNET_IP_ADDRESS` | `centos_dhcpd_subnet_ip_address` |
+| `NETMASK_IP_ADDRESS` | `centos_dhcpd_netmask_ip_address` |
+| `DHCP_DYNAMIC_IP_RANGE` ("start end" string) | `centos_dhcpd_dynamic_ip_range` (list of two items) |
+| `GATEWAY_IP_ADDRESS` | `centos_dhcpd_gateway_ip_address` |
+| `BROADCAST_IP_ADDRESS` | `centos_dhcpd_broadcast_ip_address` |
+
+Other breaking changes:
+
+- The package changed from `dhcp` to `dhcp-server` (ISC) or `kea` (Kea).
+- EL7, EL8, Fedora 30, and Fedora 31 are no longer supported.
+- EL10 and Fedora 42 use Kea, so they have no `/etc/dhcp/dhcpd.conf`.
+- New variables: `centos_dhcpd_pxelinux_filename`, `centos_dhcpd_next_server`,
+  `centos_dhcpd_authoritative`, `centos_dhcpd_log_facility`,
+  `centos_dhcpd_interfaces`, `centos_dhcpd_pools`.
 
 ## Dependencies
 
 None.
 
-## Example Playbook
+## Installation
 
-### Manual
+From Ansible Galaxy:
 
-Fetch this role from Ansible Galaxy manually:
+```bash
+ansible-galaxy install mariuszczyz.centos_dhcpd
+```
 
-`ansible-galaxy install mariuszczyz.centos_dhcpd`
-
-### Not Manual
-
-#### Galaxy
-
-Or include this role from Ansible Galaxy via `requirements.yml`
+With a `requirements.yml` file:
 
 ```yaml
 # requirements.yml
-# Install from Ansible Galaxy
 - src: mariuszczyz.centos_dhcpd
 ```
 
-#### Github option
-
 ```yaml
-# requirements.yml
-# Install from Github repository
-- src: https://www.github.com/mariuszczyz/centos_dhcpd
+# requirements.yml, from the GitHub repository
+- src: https://github.com/mariuszczyz/centos-dhcpd
 ```
 
-Then run this to install all dependencies from Ansible Galaxy:
+Install the file:
 
-`ansible-galaxy install -r requirements.yml`
+```bash
+ansible-galaxy install -r requirements.yml
+```
 
-### Run it
-
-If you want to run this role individually create a new file:
-`playbook.yml` (name it however you wish btw) with the following content:
+Example playbook:
 
 ```yaml
-- hosts: servers
-  user: YOUR USER
-  become: True
-
+---
+- name: Configure DHCP server
+  hosts: dhcp_servers
+  become: true
+  vars:
+    centos_dhcpd_domain_name: lab.example
+    centos_dhcpd_domain_dns_servers:
+      - 1.1.1.1
+      - 9.9.9.9
+    centos_dhcpd_default_lease_time: 600
+    centos_dhcpd_max_lease_time: 7200
+    centos_dhcpd_subnet_ip_address: 192.168.122.0
+    centos_dhcpd_netmask_ip_address: 255.255.255.0
+    centos_dhcpd_dynamic_ip_range:
+      - 192.168.122.100
+      - 192.168.122.110
+    centos_dhcpd_gateway_ip_address: 192.168.122.1
+    centos_dhcpd_broadcast_ip_address: 192.168.122.255
   roles:
-    - { role: mariuszczyz.centos_dhcpd, tags: ['centos_dhcpd'] }
+    - role: mariuszczyz.centos_dhcpd
 ```
 
 Run it:
 
-`ansible-playbook -i hosts playbook.yml`
+```bash
+ansible-playbook -i hosts playbook.yml
+```
+
+## Testing
+
+The role uses Molecule with the Podman driver. Install the plugin once:
+
+```bash
+python3 -m pip install --user 'molecule-plugins[podman]'
+```
+
+Run the full suite:
+
+```bash
+molecule test
+```
+
+The suite creates six systemd containers and runs converge, idempotence, and
+verify on each one:
+
+- `instance-rocky9`, `instance-alma9`, `instance-cs9` (EL9, ISC dhcpd)
+- `instance-rocky10` (EL10, Kea)
+- `instance-fedora42` (Fedora 42, Kea)
+- `instance-fedora44` (Fedora 44, ISC dhcpd)
+
+The verify step runs `dhcpd -t` on ISC instances and `kea-dhcp4 -t` plus
+`python3 -m json.tool` on Kea instances, and checks that the service is
+enabled.
 
 ## License
 
-BSD
+MIT
 
-## Author Information
+## Author
 
-Author: Mariusz Czyz  
-Date: 12/2019  
-mariuszczyz.com
+Mariusz Czyz, mariuszczyz.com

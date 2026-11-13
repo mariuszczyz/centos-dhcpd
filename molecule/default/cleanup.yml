@@ -1,0 +1,26 @@
+---
+# SPDX-License-Identifier: MIT
+- name: Prepare podman network
+  hosts: localhost
+  gather_facts: false
+  vars:
+    instances:
+      - instance-rocky9
+      - instance-alma9
+      - instance-cs9
+      - instance-rocky10
+      - instance-fedora42
+      - instance-fedora44
+  tasks:
+    - name: Remove stale instances
+      containers.podman.podman_container:
+        name: "{{ item }}"
+        executable: podman
+        state: absent
+      loop: "{{ instances }}"
+
+    - name: Create DHCP test network
+      containers.podman.podman_network:
+        name: molecule-dhcp
+        executable: podman
+        subnet: 192.168.122.0/24

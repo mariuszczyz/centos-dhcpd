@@ -1,0 +1,34 @@
+---
+# SPDX-License-Identifier: MIT
+- name: Attach test network
+  hosts: localhost
+  gather_facts: false
+  vars:
+    instances:
+      - instance-rocky9
+      - instance-alma9
+      - instance-cs9
+      - instance-rocky10
+      - instance-fedora42
+      - instance-fedora44
+  tasks:
+    - name: List running instances
+      ansible.builtin.command: podman ps --format "{{ '{{' }} .Names {{ '}}' }}"
+      register: molecule_running
+      changed_when: false
+
+    - name: Disconnect instances from the test network
+      ansible.builtin.command: podman network disconnect molecule-dhcp {{ item }}
+      loop: "{{ molecule_running.stdout_lines | intersect(instances) }}"
+      changed_when: true
+
+    - name: Recreate the test network with the converge subnet
+      containers.podman.podman_network:
+        name: molecule-dhcp
+        executable: podman
+        subnet: 192.168.122.0/24
+
+    - name: Connect instances to the test network
+      ansible.builtin.command: podman network connect molecule-dhcp {{ item }}
+      loop: "{{ molecule_running.stdout_lines | intersect(instances) }}"
+      changed_when: true

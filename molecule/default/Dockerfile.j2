@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+# Molecule podman driver template. Rendered once per platform.
+# Adds systemd and Ansible prerequisites to the base image.
+FROM {{ item.image }}
+
+RUN dnf -y install systemd sudo python3 iproute \
+    && dnf clean all
+
+CMD ["/sbin/init"]

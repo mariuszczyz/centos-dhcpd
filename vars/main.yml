@@ -1,2 +1,21 @@
 ---
-# vars file for mariuszczyz.centos-dhcpd
+# SPDX-License-Identifier: MIT
+# Internal role facts. Do not override.
+__centos_dhcpd_backend_map:
+  Rocky: { "9": isc, "10": kea }
+  AlmaLinux: { "9": isc, "10": kea }
+  CentOS: { "9": isc, "10": kea }
+  RedHat: { "9": isc, "10": kea }
+  Fedora: { "42": kea, "43": isc, "44": isc, "45": isc }
+
+centos_dhcpd_supported: >-
+  {{ ansible_facts['distribution'] in __centos_dhcpd_backend_map
+     and ansible_facts['distribution_major_version']
+     in __centos_dhcpd_backend_map[ansible_facts['distribution']] }}
+
+centos_dhcpd_backend: >-
+  {{ (__centos_dhcpd_backend_map.get(ansible_facts['distribution']) | default({}))
+     [ansible_facts['distribution_major_version']] | default('unsupported') }}
+
+centos_dhcpd_package: "{{ 'dhcp-server' if centos_dhcpd_backend == 'isc' else 'kea' }}"
+centos_dhcpd_service: "{{ 'dhcpd' if centos_dhcpd_backend == 'isc' else 'kea-dhcp4' }}"
